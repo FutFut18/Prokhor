@@ -29,7 +29,6 @@ def scan():
             print(f"Error during scanning: {e}")
             time.sleep(0.5)
 
-
 @bot.message_handler()
 def accept(message):
     if str(message.chat.id) == TGCHATID:
@@ -40,21 +39,26 @@ def accept(message):
             response_text = message.text.replace('\n', '')
             additional_info = ""
 
+            bot_info = bot.get_me()
+            bot_username = bot_info.username
+
             if message.reply_to_message:
                 try:
-                    original_message_text = message.reply_to_message.text.replace('\n',
-                                                                                  '')
-                    additional_info = f" (ответ на: \"{original_message_text}\")"
+                    original_message_text = message.reply_to_message.text.replace('\n', '')
+
+                    if message.reply_to_message.from_user.username != bot_username:
+                        additional_info = f" (ответ на: @{message.reply_to_message.from_user.username}: \"{original_message_text}\")"
+                    else:
+                        additional_info = f" (ответ на: \"{original_message_text}\")"
+
                 except Exception as e:
                     print(f"Error extracting original message text: {e}")
                     additional_info = ""
 
-            # Запись данных в файл
             with open("data.txt", "w", encoding='utf-8') as data:
                 data.write(
                     f"{count} -# {message.from_user.first_name} (@{message.from_user.username}){additional_info}: \n{response_text}\n"
                 )
-
 
 thread5 = threading.Thread(target=scan, name="Thread-5", daemon=True)
 thread5.start()

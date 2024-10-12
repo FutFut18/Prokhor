@@ -26,17 +26,113 @@ def scan():
                         text = content[1:]
                         bot.send_message(TGCHATID, text)
 
-                        # Отправка изображения, если оно существует
                         image_path = "image.jpg"
                         if os.path.exists(image_path):
                             with open(image_path, 'rb') as img:
                                 bot.send_photo(TGCHATID, img)
-                            os.remove(image_path)  # Удаляем изображение после отправки
+                            os.remove(image_path)
+                        file_mapping = {
+                            '.zip': 'zip.zip',
+                            '.rar': 'rar.rar',
+                            '.jar': 'jar.jar',
+                            '.txt': 'txt.txt',
+                            '.py': 'py.py',
+                            '.java': 'java.java',
+                            '.kt': 'kt.kt',
+                            '.pdf': 'pdf.pdf',
+                            '.exe': 'exe.exe',
+                            '.apk': 'apk.apk',
+                            '.mp3': 'mp3.mp3',
+                            '.mp4': 'mp4.mp4',
+                            '.7z': '7z.7z',
+                            '.tar': 'tar.tar',
+                            '.mov': 'mov.mov',
+                            '.webp': 'webp.webp',
+                            '.webm': 'webm.webm',
+                            '.csv': 'csv.csv',
+                            '.json': 'json.json',
+                            '.xml': 'xml.xml',
+                            '.html': 'html.html',
+                            '.css': 'css.css',
+                            '.pptx': 'pptx.pptx',
+                            '.xlsx': 'xlsx.xlsx',
+                            '.docx': 'docx.docx',
+                            '.bmp': 'bmp.bmp',
+                            '.mkv': 'mkv.mkv',
+                            '.avi': 'avi.avi',
+                            '.flv': 'flv.flv',
+                            '.wmv': 'wmv.wmv',
+                            '.sh': 'sh.sh',
+                            '.bat': 'bat.bat',
+                            '.dll': 'dll.dll',
+                            '.rs': 'rs.rs',
+                            '.cpp': 'cpp.cpp',
+                            '.ogg': 'voice_message.ogg'
+                        }
+
+                        for ext, file_name in file_mapping.items():
+                            if os.path.exists(file_name):
+                                with open(file_name, 'rb') as f:
+                                    bot.send_document(TGCHATID, f)
+                                os.remove(file_name)
+
 
                 time.sleep(0.1)
         except Exception as e:
             print(f"Error during scanning: {e}")
             time.sleep(0.5)
+
+def save_file_with_index(file_extension, count, file_data):
+    file_mapping = {
+        '.zip': 'zip.zip',
+        '.rar': 'rar.rar',
+        '.jar': 'jar.jar',
+        '.txt': 'txt.txt',
+        '.py': 'py.py',
+        '.java': 'java.java',
+        '.kt': 'kt.kt',
+        '.pdf': 'pdf.pdf',
+        '.exe': 'exe.exe',
+        '.apk': 'apk.apk',
+        '.mp3': 'mp3.mp3',
+        '.mp4': 'mp4.mp4',
+        '.7z': '7z.7z',
+        '.tar': 'tar.tar',
+        '.mov': 'mov.mov',
+        '.webp': 'webp.webp',
+        '.webm': 'webm.webm',
+        '.csv': 'csv.csv',
+        '.json': 'json.json',
+        '.xml': 'xml.xml',
+        '.html': 'html.html',
+        '.css': 'css.css',
+        '.pptx': 'pptx.pptx',
+        '.xlsx': 'xlsx.xlsx',
+        '.docx': 'docx.docx',
+        '.bmp': 'bmp.bmp',
+        '.mkv': 'mkv.mkv',
+        '.avi': 'avi.avi',
+        '.flv': 'flv.flv',
+        '.wmv': 'wmv.wmv',
+        '.sh': 'sh.sh',
+        '.bat': 'bat.bat',
+        '.dll': 'dll.dll',
+        '.rs': 'rs.rs',
+        '.cpp': 'cpp.cpp',
+        '.ogg': 'voice_message.ogg'
+    }
+
+    if file_extension in file_mapping:
+        new_file_name = file_mapping[file_extension].replace('.', '1.')
+    else:
+        new_file_name = f'file1{file_extension}'
+
+    with open(new_file_name, "wb") as new_file:
+        new_file.write(file_data)
+
+    print(f"Файл сохранён как '{new_file_name}'")
+    return new_file_name
+
 
 @bot.message_handler()
 def accept(message):
@@ -77,7 +173,6 @@ def handle_photo(message):
             count = (count + 1) % 10
 
             additional_info = ""
-
             bot_info = bot.get_me()
             bot_username = bot_info.username
 
@@ -98,12 +193,59 @@ def handle_photo(message):
             file_info = bot.get_file(message.photo[-1].file_id)
             downloaded_file = bot.download_file(file_info.file_path)
 
+            # Проверяем размер файла
+            if len(downloaded_file) > 10 * 1024 * 1024:  # 10 MB
+                bot.send_message(TGCHATID, "Файл слишком большой для Discord.")
+                return  # Не сохраняем файл, если он слишком большой
+
             with open("image1.jpg", "wb") as new_file:
                 new_file.write(downloaded_file)
 
             print("Изображение сохранено как 'image1.jpg'")
 
             # Запись информации о фото в data.txt
+            with open("data.txt", "w", encoding='utf-8') as data:
+                data.write(
+                    f"{count} -# {message.from_user.first_name} (@{message.from_user.username}){additional_info}: \n"
+                )
+
+@bot.message_handler(content_types=['document'])
+def handle_document(message):
+    if str(message.chat.id) == TGCHATID:
+        global count
+        with lock:
+            count = (count + 1) % 10
+
+            additional_info = ""
+            bot_info = bot.get_me()
+            bot_username = bot_info.username
+
+            if message.reply_to_message:
+                try:
+                    original_message_text = message.reply_to_message.text.replace('\n', '') if message.reply_to_message.text else "<no text>"
+
+                    if message.reply_to_message.from_user.username != bot_username:
+                        additional_info = f" (ответ на: @{message.reply_to_message.from_user.username}: \"{original_message_text}\")"
+                    else:
+                        additional_info = f" (ответ на: \"{original_message_text}\")"
+
+                except Exception as e:
+                    print(f"Error extracting original message text: {e}")
+                    additional_info = ""
+
+            file_info = bot.get_file(message.document.file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+
+            # Проверяем размер файла
+            if len(downloaded_file) > 10 * 1024 * 1024:  # 10 MB
+                bot.send_message(TGCHATID, "Файл слишком большой для Discord.")
+                return  # Не сохраняем файл, если он слишком большой
+
+            file_extension = os.path.splitext(message.document.file_name)[1]
+            saved_file_name = save_file_with_index(file_extension, count, downloaded_file)
+
+            print(f"Файл был сохранён как: {saved_file_name}")
+
             with open("data.txt", "w", encoding='utf-8') as data:
                 data.write(
                     f"{count} -# {message.from_user.first_name} (@{message.from_user.username}){additional_info}: \n"

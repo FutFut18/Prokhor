@@ -4,8 +4,8 @@ import time
 import threading
 import os
 
-TOKEN = "" # str
-TGCHATID = "" # str
+TOKEN = ""
+TGCHATID = ""
 
 TG_ID_DIVIDER = "\n-# [t^"
 TG_ID_ENDING = "]"
@@ -35,9 +35,23 @@ def scan():
                         except ValueError:
                             text = text
                         if origid:
-                            bot.send_message(TGCHATID, text, reply_parameters=telebot.types.ReplyParameters(message_id=origid), parse_mode='Markdown')
+                            try:
+                                #text = text.replace('_', '\_')
+                                #text = text.replace('*', '\*')
+                                #text = text.replace('`', '\`')
+                                bot.send_message(TGCHATID, text, reply_parameters=telebot.types.ReplyParameters(message_id=origid), parse_mode='Markdown')
+                            except:
+                                print("разрабы дауны")
+                                bot.send_message(TGCHATID, text, reply_parameters=telebot.types.ReplyParameters(message_id=origid))
                         else:
-                            bot.send_message(TGCHATID, text, parse_mode='Markdown')
+                            try:
+                                #text = text.replace('_', '\_')
+                                #text = text.replace('*', '\*')
+                                #text = text.replace('`', '\`')
+                                bot.send_message(TGCHATID, text, parse_mode='Markdown')
+                            except:
+                                print("разрабы дауны")
+                                bot.send_message(TGCHATID, text)
 
                         image_path = "image.jpg"
                         if os.path.exists(image_path):

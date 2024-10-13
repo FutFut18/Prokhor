@@ -5,8 +5,14 @@ import os
 import time
 import requests
 
-TOKENS = ""
-TARGET_CHANNEL_ID = 
+TOKENS = "" # str
+TARGET_CHANNEL_ID = # int
+
+TG_ID_DIVIDER = "\n-# [t^"
+TG_ID_ENDING = "]"
+DS_ID_DIVIDER = "\n [d^"
+DS_ID_DIVIDER_FORMATTING = "\n `[d^"
+DS_ID_ENDING = "]"
 
 intents = nextcord.Intents.default()
 intents.message_content = True
@@ -17,9 +23,12 @@ last_message_time = 0  # Время последнего сообщения
 MESSAGE_INTERVAL = 1  # Минимальный интервал в секундах между сообщениями
 
 
-async def send_message(text):
+async def send_message(text, reply_by_id):
     channel = botDS.get_channel(TARGET_CHANNEL_ID)
-    if channel:
+    if channel and reply_by_id:
+        reply_to = await channel.fetch_message(reply_by_id)
+        await reply_to.reply(text)
+    elif channel:
         await channel.send(text)
 
 
@@ -59,12 +68,18 @@ async def scan_file():
                 if content and content[0].isdigit():
                     current = int(content[0])
                     if current != b:
+                        origid = False
                         b = current
                         text = content[1:]
+                        try:
+                            text, origid = text.split(DS_ID_DIVIDER) # ГОВНОКОДИЩЕ
+                            origid = int(origid,16)
+                        except ValueError:
+                            text = text
 
                         current_time = time.time()
                         if current_time - last_message_time >= MESSAGE_INTERVAL:
-                            await send_message(text)
+                            await send_message(text, origid)
                             last_message_time = current_time
 
                     await send_image_or_file()
@@ -88,20 +103,28 @@ async def on_message(message):
 
     global count
     additional_info = ""
+    identificators = f"{DS_ID_DIVIDER_FORMATTING}{hex(message.id)[2:]}{DS_ID_ENDING}`"
 
     if message.reference is not None:
         try:
             original_message = await message.channel.fetch_message(message.reference.message_id)
-            original_message_text = original_message.content.replace('\n', '')
-            original_message_text = original_message_text.replace('-#', '')
-            if original_message.author != botDS.user:
-                original_message_author = original_message.author
+            origtext = original_message.content
+            origauthor = original_message.author
+            origid = ""
+
+            if origauthor != botDS.user:
+                origauthor = original_message.author
+                origtext = original_message.content
             else:
-                original_message_author = ""
-            if original_message_author:
-                additional_info = f" (ответ на: {original_message_author}: \"{original_message_text}\")"
+                origauthor = ""
+                try:
+                    origtext, origid = origtext.split(TG_ID_DIVIDER)
+                except ValueError:
+                    origtext = origtext
+            if origid:
+                identificators += f"{TG_ID_DIVIDER}{origid[:-1]}"
             else:
-                additional_info = f" (ответ на: \"{original_message_text}\")"
+                additional_info = f" (ответ на: \"{origtext}\")"
         except Exception as e:
             print(f"Error fetching original message: {e}")
             additional_info = ""
@@ -161,8 +184,7 @@ async def on_message(message):
     count = (count + 1) % 10
     with open("data1.txt", "w", encoding='utf-8') as data:
         data.write(
-            f"{count} {message.author.global_name} (@" + str(message.author) + f"){additional_info}: \n" + str(
-                message.content)
+            f"{count} @{message.author}{additional_info}: " + str(message.content) + f"{identificators}"
         )
 
 

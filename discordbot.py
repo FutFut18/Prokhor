@@ -5,8 +5,8 @@ import os
 import time
 import requests
 
-TOKENS = "" # str
-TARGET_CHANNEL_ID = # int
+TOKENS = ""
+TARGET_CHANNEL_ID = 
 
 TG_ID_DIVIDER = "\n-# [t^"
 TG_ID_ENDING = "]"
@@ -183,9 +183,20 @@ async def on_message(message):
 
     count = (count + 1) % 10
     with open("data1.txt", "w", encoding='utf-8') as data:
+        message_author = str(message.author)
+        message_author = message_author.replace('*', '\*')
+        message_author = message_author.replace('_', '\_')
+        message_author = message_author.replace('`', '\`')
+        message.content = str(message.content)
+        message.content = message.content.replace('`', '\`')
+        message.content = message.content.replace('*', '\*')
+        message.content = message.content.replace('_', '\_')
+        additional_info = str(additional_info)
+        additional_info = additional_info.replace('`', '\`')
+        additional_info = additional_info.replace('_', '\_')
+        additional_info = additional_info.replace('*', '\*')
         data.write(
-            f"{count} @{message.author}{additional_info}: " + str(message.content) + f"{identificators}"
+            f"{count} @{message_author}{additional_info}: " + str(message.content) + f"{identificators}"
         )
-
 
 botDS.run(TOKENS)

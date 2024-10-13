@@ -4,8 +4,13 @@ import time
 import threading
 import os
 
-TOKEN = ""
-TGCHATID = ""
+TOKEN = "" # str
+TGCHATID = "" # str
+
+TG_ID_DIVIDER = "\n-# [t^"
+TG_ID_ENDING = "]"
+DS_ID_DIVIDER = "\n [d^"
+DS_ID_ENDING = "]"
 
 bot = telebot.TeleBot(TOKEN)
 count = 0
@@ -21,10 +26,18 @@ def scan():
                 if content and content[0].isdigit():
                     current = int(content[0])
                     if current != b:
+                        origid = False
                         b = current
                         global text
                         text = content[1:]
-                        bot.send_message(TGCHATID, text)
+                        try:
+                            text, origid = text.split(TG_ID_DIVIDER) # govnokod
+                        except ValueError:
+                            text = text
+                        if origid:
+                            bot.send_message(TGCHATID, text, reply_parameters=telebot.types.ReplyParameters(message_id=origid), parse_mode='Markdown')
+                        else:
+                            bot.send_message(TGCHATID, text, parse_mode='Markdown')
 
                         image_path = "image.jpg"
                         if os.path.exists(image_path):
@@ -143,18 +156,28 @@ def accept(message):
 
             response_text = message.text.replace('\n', '')
             additional_info = ""
+            origtext = ""
+            origid = ""
 
             bot_info = bot.get_me()
             bot_username = bot_info.username
+            identificators = f"{TG_ID_DIVIDER}{message.id}{TG_ID_ENDING}"
 
             if message.reply_to_message:
                 try:
-                    original_message_text = message.reply_to_message.text.replace('\n', '')
+                    origtext = message.reply_to_message.text
 
                     if message.reply_to_message.from_user.username != bot_username:
-                        additional_info = f" (ответ на: @{message.reply_to_message.from_user.username}: \"{original_message_text}\")"
+                        additional_info = f" (ответ на: {message.reply_to_message.from_user.username}: \"{origtext}\")"
                     else:
-                        additional_info = f" (ответ на: \"{original_message_text}\")"
+                        try:
+                            origtext, origid = message.reply_to_message.text.split(DS_ID_DIVIDER)
+                        except ValueError:
+                            origtext = origtext.replace('\n', '')
+                        if origid:
+                            identificators += f"{DS_ID_DIVIDER}{origid[:-1]}"
+                        else:
+                            additional_info = f" (ответ на: \"{origtext}\")"
 
                 except Exception as e:
                     print(f"Error extracting original message text: {e}")
@@ -162,7 +185,7 @@ def accept(message):
 
             with open("data.txt", "w", encoding='utf-8') as data:
                 data.write(
-                    f"{count} -# {message.from_user.first_name} (@{message.from_user.username}){additional_info}: \n{response_text}\n"
+                    f"{count} @{message.from_user.username}{additional_info}: {response_text}{identificators}"
                 )
 
 @bot.message_handler(content_types=['photo'])
@@ -206,7 +229,7 @@ def handle_photo(message):
             # Запись информации о фото в data.txt
             with open("data.txt", "w", encoding='utf-8') as data:
                 data.write(
-                    f"{count} -# {message.from_user.first_name} (@{message.from_user.username}){additional_info}: \n"
+                    f"{count} @{message.from_user.username}{additional_info}: "
                 )
 
 @bot.message_handler(content_types=['document'])
@@ -248,7 +271,7 @@ def handle_document(message):
 
             with open("data.txt", "w", encoding='utf-8') as data:
                 data.write(
-                    f"{count} -# {message.from_user.first_name} (@{message.from_user.username}){additional_info}: \n"
+                    f"{count} @{message.from_user.username}{additional_info}: "
                 )
 
 

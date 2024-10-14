@@ -3,14 +3,15 @@ import telebot
 import time
 import threading
 import os
+import settings
 
-TOKEN = ""
-TGCHATID = ""
+TOKEN = settings.tgtoken
+TGCHATID = settings.tgid
 
-TG_ID_DIVIDER = "\n-# [t^"
-TG_ID_ENDING = "]"
-DS_ID_DIVIDER = "\n [d^"
-DS_ID_ENDING = "]"
+TG_ID_DIVIDER = settings.TG_ID_DIVIDER
+TG_ID_ENDING = settings.TG_ID_ENDING
+DS_ID_DIVIDER = settings.DS_ID_DIVIDER
+DS_ID_ENDING = settings.DS_ID_ENDING
 
 bot = telebot.TeleBot(TOKEN)
 count = 0
@@ -226,21 +227,18 @@ def handle_photo(message):
                     print(f"Error extracting original message text: {e}")
                     additional_info = ""
 
-            # Сохраняем фото
             file_info = bot.get_file(message.photo[-1].file_id)
             downloaded_file = bot.download_file(file_info.file_path)
 
-            # Проверяем размер файла
             if len(downloaded_file) > 10 * 1024 * 1024:  # 10 MB
                 bot.send_message(TGCHATID, "Файл слишком большой для Discord.")
-                return  # Не сохраняем файл, если он слишком большой
+                return
 
             with open("image1.jpg", "wb") as new_file:
                 new_file.write(downloaded_file)
 
             print("Изображение сохранено как 'image1.jpg'")
 
-            # Запись информации о фото в data.txt
             with open("data.txt", "w", encoding='utf-8') as data:
                 data.write(
                     f"{count} @{message.from_user.username}{additional_info}: "
@@ -265,29 +263,21 @@ def handle_document(message):
                         additional_info = f" (ответ на: @{message.reply_to_message.from_user.username}: \"{original_message_text}\")"
                     else:
                         additional_info = f" (ответ на: \"{original_message_text}\")"
-
                 except Exception as e:
                     print(f"Error extracting original message text: {e}")
                     additional_info = ""
-
             file_info = bot.get_file(message.document.file_id)
             downloaded_file = bot.download_file(file_info.file_path)
-
-            # Проверяем размер файла
             if len(downloaded_file) > 10 * 1024 * 1024:  # 10 MB
                 bot.send_message(TGCHATID, "Файл слишком большой для Discord.")
-                return  # Не сохраняем файл, если он слишком большой
-
+                return
             file_extension = os.path.splitext(message.document.file_name)[1]
             saved_file_name = save_file_with_index(file_extension, count, downloaded_file)
-
             print(f"Файл был сохранён как: {saved_file_name}")
-
             with open("data.txt", "w", encoding='utf-8') as data:
                 data.write(
                     f"{count} @{message.from_user.username}{additional_info}: "
                 )
-
 
 thread5 = threading.Thread(target=scan, name="Thread-5", daemon=True)
 thread5.start()

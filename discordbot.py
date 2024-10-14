@@ -191,4 +191,3 @@ async def on_message(message):
         )
 
 botDS.run(TOKENS)
-botDS.run(TOKENS)

@@ -4,15 +4,16 @@ import asyncio
 import os
 import time
 import requests
+import settings
 
-TOKENS = ""
-TARGET_CHANNEL_ID = 
+TOKENS = settings.dstoken
+TARGET_CHANNEL_ID = int(settings.dsid)
 
-TG_ID_DIVIDER = "\n-# [t^"
-TG_ID_ENDING = "]"
-DS_ID_DIVIDER = "\n [d^"
-DS_ID_DIVIDER_FORMATTING = "\n `[d^"
-DS_ID_ENDING = "]"
+TG_ID_DIVIDER = settings.TG_ID_DIVIDER
+TG_ID_ENDING = settings.TG_ID_ENDING
+DS_ID_DIVIDER = settings.DS_ID_DIVIDER
+DS_ID_DIVIDER_FORMATTING = settings.DS_ID_DIVIDER_FORMATTING
+DS_ID_ENDING = settings.DS_ID_ENDING
 
 intents = nextcord.Intents.default()
 intents.message_content = True
@@ -56,7 +57,6 @@ async def send_image_or_file():
         if os.path.exists(file_path):
             await send_file(file_path)
 
-
 async def scan_file():
     b = -1
     global last_message_time
@@ -64,7 +64,6 @@ async def scan_file():
         try:
             with open("data.txt", "r", encoding="utf-8") as data:
                 content = data.read()
-
                 if content and content[0].isdigit():
                     current = int(content[0])
                     if current != b:
@@ -76,42 +75,34 @@ async def scan_file():
                             origid = int(origid,16)
                         except ValueError:
                             text = text
-
                         current_time = time.time()
                         if current_time - last_message_time >= MESSAGE_INTERVAL:
                             await send_message(text, origid)
                             last_message_time = current_time
-
                     await send_image_or_file()
-
                 await asyncio.sleep(1)
         except Exception as e:
             print(f"Error during scanning: {e}")
             await asyncio.sleep(1)
-
 
 @botDS.event
 async def on_ready():
     print(f"Logged in as {botDS.user}")
     botDS.loop.create_task(scan_file())
 
-
 @botDS.event
 async def on_message(message):
     if message.author == botDS.user or message.channel.id != TARGET_CHANNEL_ID:
         return
-
     global count
     additional_info = ""
     identificators = f"{DS_ID_DIVIDER_FORMATTING}{hex(message.id)[2:]}{DS_ID_ENDING}`"
-
     if message.reference is not None:
         try:
             original_message = await message.channel.fetch_message(message.reference.message_id)
             origtext = original_message.content
             origauthor = original_message.author
             origid = ""
-
             if origauthor != botDS.user:
                 origauthor = original_message.author
                 origtext = original_message.content
@@ -199,4 +190,5 @@ async def on_message(message):
             f"{count} @{message_author}{additional_info}: " + str(message.content) + f"{identificators}"
         )
 
+botDS.run(TOKENS)
 botDS.run(TOKENS)

@@ -12,7 +12,14 @@ TG_ID_DIVIDER = settings.TG_ID_DIVIDER
 TG_ID_ENDING = settings.TG_ID_ENDING
 DS_ID_DIVIDER = settings.DS_ID_DIVIDER
 DS_ID_ENDING = settings.DS_ID_ENDING
-
+MESSAGE_DIVIDER = settings.MESSAGE_DIVIDER
+MESSAGE_ENDING = settings.MESSAGE_ENDING
+ID_DIVIDER = settings.ID_DIVIDER
+ID_ENDING = settings.ID_ENDING
+TG_ID_ENDING_ENDING = settings.TG_ID_ENDING_ENDING
+DS_ID_ENDING_ENDING = settings.DS_ID_ENDING_ENDING
+DS_ID_DIVIDER_DIVIDER = settings.DS_ID_DIVIDER_DIVIDER
+file_mapping = settings.file_mapping
 bot = telebot.TeleBot(TOKEN)
 count = 0
 lock = threading.Lock()
@@ -37,21 +44,17 @@ def scan():
                             text = text
                         if origid:
                             try:
-                                #text = text.replace('_', '\_')
-                                #text = text.replace('*', '\*')
-                                #text = text.replace('`', '\`')
+                                print(origid)
                                 bot.send_message(TGCHATID, text, reply_parameters=telebot.types.ReplyParameters(message_id=origid), parse_mode='Markdown')
                             except:
-                                print("разрабы дауны")
+                                print(origid)
                                 bot.send_message(TGCHATID, text, reply_parameters=telebot.types.ReplyParameters(message_id=origid))
                         else:
                             try:
-                                #text = text.replace('_', '\_')
-                                #text = text.replace('*', '\*')
-                                #text = text.replace('`', '\`')
+                                print(origid)
                                 bot.send_message(TGCHATID, text, parse_mode='Markdown')
                             except:
-                                print("разрабы дауны")
+                                print(origid)
                                 bot.send_message(TGCHATID, text)
 
                         image_path = "image.jpg"
@@ -59,45 +62,6 @@ def scan():
                             with open(image_path, 'rb') as img:
                                 bot.send_photo(TGCHATID, img)
                             os.remove(image_path)
-                        file_mapping = {
-                            '.zip': 'zip.zip',
-                            '.rar': 'rar.rar',
-                            '.jar': 'jar.jar',
-                            '.txt': 'txt.txt',
-                            '.py': 'py.py',
-                            '.java': 'java.java',
-                            '.kt': 'kt.kt',
-                            '.pdf': 'pdf.pdf',
-                            '.exe': 'exe.exe',
-                            '.apk': 'apk.apk',
-                            '.mp3': 'mp3.mp3',
-                            '.mp4': 'mp4.mp4',
-                            '.7z': '7z.7z',
-                            '.tar': 'tar.tar',
-                            '.mov': 'mov.mov',
-                            '.webp': 'webp.webp',
-                            '.webm': 'webm.webm',
-                            '.csv': 'csv.csv',
-                            '.json': 'json.json',
-                            '.xml': 'xml.xml',
-                            '.html': 'html.html',
-                            '.css': 'css.css',
-                            '.pptx': 'pptx.pptx',
-                            '.xlsx': 'xlsx.xlsx',
-                            '.docx': 'docx.docx',
-                            '.bmp': 'bmp.bmp',
-                            '.mkv': 'mkv.mkv',
-                            '.avi': 'avi.avi',
-                            '.flv': 'flv.flv',
-                            '.wmv': 'wmv.wmv',
-                            '.sh': 'sh.sh',
-                            '.bat': 'bat.bat',
-                            '.dll': 'dll.dll',
-                            '.rs': 'rs.rs',
-                            '.cpp': 'cpp.cpp',
-                            '.ogg': 'voice_message.ogg'
-                        }
-
                         for ext, file_name in file_mapping.items():
                             if os.path.exists(file_name):
                                 with open(file_name, 'rb') as f:
@@ -111,45 +75,6 @@ def scan():
             time.sleep(0.5)
 
 def save_file_with_index(file_extension, count, file_data):
-    file_mapping = {
-        '.zip': 'zip.zip',
-        '.rar': 'rar.rar',
-        '.jar': 'jar.jar',
-        '.txt': 'txt.txt',
-        '.py': 'py.py',
-        '.java': 'java.java',
-        '.kt': 'kt.kt',
-        '.pdf': 'pdf.pdf',
-        '.exe': 'exe.exe',
-        '.apk': 'apk.apk',
-        '.mp3': 'mp3.mp3',
-        '.mp4': 'mp4.mp4',
-        '.7z': '7z.7z',
-        '.tar': 'tar.tar',
-        '.mov': 'mov.mov',
-        '.webp': 'webp.webp',
-        '.webm': 'webm.webm',
-        '.csv': 'csv.csv',
-        '.json': 'json.json',
-        '.xml': 'xml.xml',
-        '.html': 'html.html',
-        '.css': 'css.css',
-        '.pptx': 'pptx.pptx',
-        '.xlsx': 'xlsx.xlsx',
-        '.docx': 'docx.docx',
-        '.bmp': 'bmp.bmp',
-        '.mkv': 'mkv.mkv',
-        '.avi': 'avi.avi',
-        '.flv': 'flv.flv',
-        '.wmv': 'wmv.wmv',
-        '.sh': 'sh.sh',
-        '.bat': 'bat.bat',
-        '.dll': 'dll.dll',
-        '.rs': 'rs.rs',
-        '.cpp': 'cpp.cpp',
-        '.ogg': 'voice_message.ogg'
-    }
-
     if file_extension in file_mapping:
         new_file_name = file_mapping[file_extension].replace('.', '1.')
     else:
@@ -200,7 +125,7 @@ def accept(message):
 
             with open("data.txt", "w", encoding='utf-8') as data:
                 data.write(
-                    f"{count} @{message.from_user.username}{additional_info}: {response_text}{identificators}"
+                    f"{count} @{message.from_user.username}{additional_info}: {ID_DIVIDER}{message.from_user.id}{ID_ENDING}{MESSAGE_DIVIDER}{response_text}{MESSAGE_ENDING}{identificators}"
                 )
 
 @bot.message_handler(content_types=['photo'])

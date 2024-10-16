@@ -5,6 +5,7 @@ import os
 import time
 import requests
 import settings
+import re
 
 TOKENS = settings.dstoken
 TARGET_CHANNEL_ID = int(settings.dsid)
@@ -14,6 +15,16 @@ TG_ID_ENDING = settings.TG_ID_ENDING
 DS_ID_DIVIDER = settings.DS_ID_DIVIDER
 DS_ID_DIVIDER_FORMATTING = settings.DS_ID_DIVIDER_FORMATTING
 DS_ID_ENDING = settings.DS_ID_ENDING
+MESSAGE_DIVIDER = settings.MESSAGE_DIVIDER
+MESSAGE_ENDING = settings.MESSAGE_ENDING
+ID_DIVIDER = settings.ID_DIVIDER
+ID_ENDING = settings.ID_ENDING
+TG_ID_ENDING_ENDING = settings.TG_ID_ENDING_ENDING
+DS_ID_ENDING_ENDING = settings.DS_ID_ENDING_ENDING
+DS_ID_DIVIDER_DIVIDER = settings.DS_ID_DIVIDER_DIVIDER
+webhook_url = settings.webhook_url
+file_mapping = settings.file_mapping
+server_id = settings.serverid
 
 intents = nextcord.Intents.default()
 intents.message_content = True
@@ -27,11 +38,104 @@ MESSAGE_INTERVAL = 1  # Минимальный интервал в секунд�
 async def send_message(text, reply_by_id):
     channel = botDS.get_channel(TARGET_CHANNEL_ID)
     if channel and reply_by_id:
-        reply_to = await channel.fetch_message(reply_by_id)
-        await reply_to.reply(text)
+        texttoextract = text
+        divider = ID_DIVIDER
+        ending = ID_ENDING
+        idTG = await extract_text(texttoextract, divider, ending)
+        if idTG in settings.idZ:
+            texttoextract = text
+            divider = ID_DIVIDER
+            ending = ID_ENDING
+            idTG = await extract_text(texttoextract, divider, ending)
+            texttoextract = text
+            divider = MESSAGE_DIVIDER
+            ending = MESSAGE_ENDING
+            extracted_text = await extract_text(texttoextract, divider, ending)
+            idDS = settings.idZ.get(idTG)
+            userDS = await botDS.fetch_user(idDS)
+            try:
+                avatar = userDS.avatar.url
+            except:
+                avatar = ""
+            texttoextract = text
+            divider = TG_ID_DIVIDER
+            ending = TG_ID_ENDING
+            idMSG = await extract_text(texttoextract, divider, ending)
+            extracted_text += TG_ID_DIVIDER
+            extracted_text += idMSG
+            extracted_text += TG_ID_ENDING
+            link = "-# https://discord.com/channels/" + server_id + "/" + str(TARGET_CHANNEL_ID) + "/" + str(reply_by_id) + "\n"
+            print(reply_by_id)
+            data = {
+                "content": link + extracted_text,
+                "username": userDS.name,
+                "avatar_url": avatar,
+                "message_reference": {
+                    "message_id": reply_by_id,
+                    "channel_id": TARGET_CHANNEL_ID,
+                }
+            }
+            send_webhook = requests.post(webhook_url, json=data)
+        else:
+            text = text.replace(MESSAGE_DIVIDER, "")
+            text = text.replace(MESSAGE_ENDING, "")
+            texttoremove = text
+            divider = ID_DIVIDER
+            ending = ID_ENDING
+            text = await remove_sections(texttoremove, divider, ending)
+            reply_to = await channel.fetch_message(reply_by_id)
+            await reply_to.reply(text)
     elif channel:
-        await channel.send(text)
+        texttoextract = text
+        divider = ID_DIVIDER
+        ending = ID_ENDING
+        idTG = await extract_text(texttoextract, divider, ending)
+        if idTG in settings.idZ:
+            texttoextract = text
+            divider = MESSAGE_DIVIDER
+            ending = MESSAGE_ENDING
+            extracted_text = await extract_text(texttoextract, divider, ending)
+            idDS = settings.idZ.get(idTG)
+            userDS = await botDS.fetch_user(idDS)
+            try:
+                avatar = userDS.avatar.url
+            except:
+                avatar = ""
+            texttoextract = text
+            divider = TG_ID_DIVIDER
+            ending = TG_ID_ENDING
+            idMSG = await extract_text(texttoextract, divider, ending)
+            extracted_text += TG_ID_DIVIDER
+            extracted_text += idMSG
+            extracted_text += TG_ID_ENDING
+            data = {
+                "content": extracted_text,
+                "username": userDS.name,
+                "avatar_url": avatar
+            }
 
+            response = requests.post(webhook_url, json=data)
+        else:
+            text = text.replace(MESSAGE_DIVIDER, "")
+            text = text.replace(MESSAGE_ENDING, "")
+            texttoremove = text
+            divider = ID_DIVIDER
+            ending = ID_ENDING
+            text = await remove_sections(texttoremove, divider, ending)
+            await channel.send(text)
+
+async def extract_text(texttoextract: str, divider: str, ending: str) -> str:
+    try:
+        start = texttoextract.index(divider) + len(divider)
+        end = texttoextract.index(ending, start)
+        return texttoextract[start:end].strip()
+    except ValueError:
+        return ""
+
+async def remove_sections(texttoremove: str, divider: str, ending: str) -> str:
+    pattern = re.escape(divider) + r'.*?' + re.escape(ending)
+    cleaned_text = re.sub(pattern, '', texttoremove)
+    return cleaned_text
 
 async def send_file(file_path):
     channel = botDS.get_channel(TARGET_CHANNEL_ID)
@@ -129,44 +233,6 @@ async def on_message(message):
                 with open(save_path, "wb") as f:
                     f.write(image_data)
         for attachment in message.attachments:
-            file_mapping = {
-                '.zip': 'zip.zip',
-                '.rar': 'rar.rar',
-                '.jar': 'jar.jar',
-                '.txt': 'txt.txt',
-                '.py': 'py.py',
-                '.java': 'java.java',
-                '.kt': 'kt.kt',
-                '.pdf': 'pdf.pdf',
-                '.exe': 'exe.exe',
-                '.apk': 'apk.apk',
-                '.mp3': 'mp3.mp3',
-                '.mp4': 'mp4.mp4',
-                '.7z': '7z.7z',
-                '.tar': 'tar.tar',
-                '.mov': 'mov.mov',
-                '.webp': 'webp.webp',
-                '.webm': 'webm.webm',
-                '.csv': 'csv.csv',
-                '.json': 'json.json',
-                '.xml': 'xml.xml',
-                '.html': 'html.html',
-                '.css': 'css.css',
-                '.pptx': 'pptx.pptx',
-                '.xlsx': 'xlsx.xlsx',
-                '.docx': 'docx.docx',
-                '.bmp': 'bmp.bmp',
-                '.mkv': 'mkv.mkv',
-                '.avi': 'avi.avi',
-                '.flv': 'flv.flv',
-                '.wmv': 'wmv.wmv',
-                '.sh': 'sh.sh',
-                '.bat': 'bat.bat',
-                '.dll': 'dll.dll',
-                '.rs': 'rs.rs',
-                '.cpp': 'cpp.cpp',
-                '.ogg': 'voice_message.ogg'
-            }
             for ext, new_name in file_mapping.items():
                 if attachment.filename.endswith(ext):
                     await attachment.save(new_name)
